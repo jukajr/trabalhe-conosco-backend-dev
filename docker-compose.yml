@@ -1,0 +1,38 @@
+version: '2'
+
+volumes:
+  sandbox-redis-data:
+    driver: local
+
+services:
+  mongo:
+    image: 'mongo'
+    ports:
+      - '27017:27017'
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: sandbox
+
+  cache:
+    image: redis:3.2
+    container_name: sandbox-redis
+    command: --appendonly yes
+    volumes:
+      - sandbox-redis-data:/data
+    ports:
+      - '6379:6379'
+
+  app:
+    image: ambientum/php:7.2-nginx
+    container_name: sandbox-php
+    tty: true
+    stdin_open: true
+    depends_on:
+      - 'mongo'
+    volumes:
+      - ./app:/var/www/app
+    ports:
+      - "80:8080"
+    links:
+      - mongo
+      - cache
